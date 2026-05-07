@@ -1,3 +1,6 @@
+// features/product_details/data/add_review_remote_data_source.dart
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:veloura/core/services/secure_storage_services.dart';
 
@@ -13,7 +16,7 @@ class AddReviewRemoteDataSource {
     required int rating,
   }) async {
     final token = await secureStorage.getAccessToken();
-    
+
     if (token == null) {
       throw Exception("No valid token found");
     }
@@ -21,48 +24,62 @@ class AddReviewRemoteDataSource {
     try {
       final response = await dio.post(
         'https://accessories-eshop.runasp.net/api/reviews/$productId',
-        data: { "comment": comment, "rating": rating},
-        options: Options(headers: {
-          'Authorization': 'Bearer $token',
-          'Content-Type': 'application/json',
-        }),
+        data: {"comment": comment, "rating": rating},
+        options: Options(
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
       );
       print("ADD REVIEW RESPONSE => ${response.data}");
     } on DioException catch (e) {
       print("ERROR => ${e.response?.data}");
       throw Exception("Failed to add review: ${e.response?.data}");
     }
-    
   }
-  
- Future<List<dynamic>> getReviews(String productId) async {
+
+  Future<List<dynamic>> getReviews(String productId) async {
     final token = await secureStorage.getAccessToken();
 
     if (token == null) {
-      throw Exception("No valid token found");
+      throw Exception("Please login first");
     }
 
     try {
       final response = await dio.get(
         'https://accessories-eshop.runasp.net/api/reviews/$productId',
-        options: Options(headers: {
-          'Authorization': 'Bearer $token',
-        }),
+        options: Options(headers: {'Authorization': 'Bearer $token'}),
       );
 
       return response.data["reviews"]["items"];
-
     } on DioException catch (e) {
-      throw Exception(e.response?.data.toString());
+      log("ERROR => ${e.response?.data}");
+
+      final data = e.response?.data;
+
+      String errorMessage = "Something went wrong";
+
+      if (data != null && data is Map<String, dynamic>) {
+        final generalErrors = data["errors"]?["generalErrors"];
+
+        if (generalErrors != null && generalErrors is List) {
+          final firstError = generalErrors.first.toString();
+
+          if (firstError.contains("Review.ProductNotFound")) {
+            errorMessage = "No reviews found for this product";
+          } else {
+            errorMessage = firstError;
+          }
+        } else if (data["message"] != null) {
+          errorMessage = data["message"];
+        }
+      }
+
+      throw errorMessage;
     }
   }
 }
-
-
-
-
-
-
 
 // import 'package:dio/dio.dart';
 

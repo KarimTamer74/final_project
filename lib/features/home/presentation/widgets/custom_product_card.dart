@@ -1,6 +1,7 @@
+// features/home/presentation/widgets/custom_product_card.dart
 import 'package:flutter/material.dart';
-import 'package:veloura/core/theme/app_colors.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:veloura/core/theme/app_colors.dart';
 import 'package:veloura/features/home/data/models/product_model.dart';
 import 'package:veloura/features/product_details/presentation/screens/product_details_screen.dart';
 
@@ -38,6 +39,17 @@ class CustomProductCard extends StatelessWidget {
                       product.imageUrl,
                       width: double.infinity,
                       fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return Image.network(
+                          'https://i.pinimg.com/736x/86/95/7f/86957f18605edb09e7b75925147e60b1.jpg',
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        );
+                      },
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Center(child: CircularProgressIndicator());
+                      },
                     ),
                   ),
                 ),
